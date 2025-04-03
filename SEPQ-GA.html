@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2487.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">function genetic_algorithm_demand_sensitivity()</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Initialization Parameters</p>
+<p class="p1"><span class="Apple-converted-space">    </span>num_generations = 100;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>population_size = 50;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>crossover_rate = 0.8;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mutation_rate = 0.1;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Cost Parameters</p>
+<p class="p1"><span class="Apple-converted-space">    </span>C1i = [4967, 4967]; % Setup cost (Rp/batch)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>C2i = [256, 323]; % Inventory cost per item i (Rp/ton)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>C3i = [73667, 85945]; % Production cost per item i (Rp/ton)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>C4i = [6250, 6250] * 12; % Solid waste disposal cost per year (Rp/year)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>C5i = [4500 * 60, 0]; % Liquid waste sales revenue per year (Rp/year)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Production per year</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Pi = [4228, 3624]; % Production of item i (kg/year)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Warehouse Capacity per month</p>
+<p class="p1"><span class="Apple-converted-space">    </span>current_warehouse_volume = 3 * 3 * 2.7; % m^3</p>
+<p class="p1"><span class="Apple-converted-space">    </span>warehouse_capacity = current_warehouse_volume * 2; % m^3</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Product space requirement</p>
+<p class="p1"><span class="Apple-converted-space">    </span>vi = [0.02, 0.02]; % Assumed space requirement per product (m^3/kg)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Define demand variations for sensitivity analysis</p>
+<p class="p1"><span class="Apple-converted-space">    </span>demand_variations = [3000:500:6000]; % Example range of demands</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Preallocate storage for best fitness values</p>
+<p class="p1"><span class="Apple-converted-space">    </span>best_fitness_values = zeros(length(demand_variations), 1);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Loop over each demand variation</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for d = 1:length(demand_variations)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Di = [demand_variations(d), demand_variations(d)]; % Current demand for analysis</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>% Population Initialization</p>
+<p class="p1"><span class="Apple-converted-space">        </span>population = initialize_population(population_size, numel(Di) * 2); % T_i and T_2i</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>best_fitness = inf;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>for generation = 1:num_generations</p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Objective Function Evaluation</p>
+<p class="p1"><span class="Apple-converted-space">            </span>fitness = evaluate_population(population, Di, Pi, C1i, C2i, C3i, C4i, C5i, warehouse_capacity, vi);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Selection</p>
+<p class="p1"><span class="Apple-converted-space">            </span>selected_population = selection(population, fitness);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Crossover</p>
+<p class="p1"><span class="Apple-converted-space">            </span>new_population = crossover(selected_population, crossover_rate);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Mutation</p>
+<p class="p1"><span class="Apple-converted-space">            </span>mutated_population = mutation(new_population, mutation_rate);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Re-evaluation</p>
+<p class="p1"><span class="Apple-converted-space">            </span>fitness = evaluate_population(mutated_population, Di, Pi, C1i, C2i, C3i, C4i, C5i, warehouse_capacity, vi);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Update Population</p>
+<p class="p1"><span class="Apple-converted-space">            </span>population = mutated_population;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Store Best Fitness</p>
+<p class="p1"><span class="Apple-converted-space">            </span>current_best_fitness = min(fitness);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if current_best_fitness &lt; best_fitness</p>
+<p class="p1"><span class="Apple-converted-space">                </span>best_fitness = current_best_fitness;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>end</p>
+<p class="p1"><span class="Apple-converted-space">        </span>end</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>% Store best fitness for current demand variation</p>
+<p class="p1"><span class="Apple-converted-space">        </span>best_fitness_values(d) = best_fitness;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>fprintf('Demand: %d, Best Fitness = %f\n', demand_variations(d), best_fitness);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Plotting the results</p>
+<p class="p1"><span class="Apple-converted-space">    </span>figure;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>plot(demand_variations, best_fitness_values, '-o');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>xlabel('Demand (kg/year)');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ylabel('Best Fitness Value');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>title('Sensitivity Analysis: Best Fitness Value vs Demand');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>grid on;</p>
+<p class="p2"><br></p>
+<p class="p1">end</p>
+<p class="p2"><br></p>
+<p class="p1">% Helper functions</p>
+<p class="p2"><br></p>
+<p class="p1">function population = initialize_population(population_size, num_variables)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Initialize random population</p>
+<p class="p1"><span class="Apple-converted-space">    </span>population = rand(population_size, num_variables);</p>
+<p class="p1">end</p>
+<p class="p2"><br></p>
+<p class="p1">function fitness = evaluate_population(population, Di, Pi, C1i, C2i, C3i, C4i, C5i, warehouse_capacity, vi)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Evaluate the objective function for each individual in the population</p>
+<p class="p1"><span class="Apple-converted-space">    </span>num_individuals = size(population, 1);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>fitness = zeros(num_individuals, 1);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for i = 1:num_individuals</p>
+<p class="p1"><span class="Apple-converted-space">        </span>T = population(i, 1:end/2);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>T2 = population(i, end/2+1:end);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>fitness(i) = calculate_objective_function(T, T2, Di, Pi, C1i, C2i, C3i, C4i, C5i, warehouse_capacity, vi);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1">end</p>
+<p class="p2"><br></p>
+<p class="p1">function objective_value = calculate_objective_function(T, T2, Di, Pi, C1i, C2i, C3i, C4i, C5i, warehouse_capacity, vi)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Calculate the objective function value based on T and T2</p>
+<p class="p1"><span class="Apple-converted-space">    </span>n = numel(Di);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>objective_value = 0;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for i = 1:n</p>
+<p class="p1"><span class="Apple-converted-space">        </span>term1 = C1i(i) / T(i);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>term2 = (C2i(i) + Di(i) * T2(i)^2) / (2 * T(i));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>term3 = (C3i(i) * Di(i) + C4i(i) - C5i(i));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>term4 = (C4i(i) - vi(i) * Pi(i) * (T2(i) * Di(i)) / (Pi(i) - Di(i) + eps));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>objective_value = objective_value + term1 + term2 + term3 + term4;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Ensure warehouse capacity is not exceeded</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if sum(T .* vi .* Di) &gt; warehouse_capacity</p>
+<p class="p1"><span class="Apple-converted-space">        </span>objective_value = inf; % Infinite penalty if capacity is exceeded;<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1">end</p>
+<p class="p2"><br></p>
+<p class="p1">function selected_population = selection(population, fitness)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Select individuals based on their fitness using roulette wheel selection</p>
+<p class="p1"><span class="Apple-converted-space">    </span>num_individuals = size(population, 1);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>selected_population = zeros(size(population));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Avoid division by zero if all fitness are zero</p>
+<p class="p1"><span class="Apple-converted-space">    </span>total_fitness = sum(fitness);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if total_fitness == 0</p>
+<p class="p1"><span class="Apple-converted-space">        </span>normalized_fitness = ones(num_individuals, 1) / num_individuals; % Equal probability if all fitness are zero</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else</p>
+<p class="p1"><span class="Apple-converted-space">        </span>normalized_fitness = fitness / total_fitness;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>cumulative_fitness = cumsum(normalized_fitness);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for i = 1:num_individuals</p>
+<p class="p1"><span class="Apple-converted-space">        </span>r = rand;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>selected_index = find(cumulative_fitness &gt;= r, 1, 'first');</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if ~isempty(selected_index)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>selected_population(i, :) = population(selected_index, :);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>else</p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Debugging output</p>
+<p class="p1"><span class="Apple-converted-space">            </span>disp('Warning: No selection made, choosing random individual instead.');</p>
+<p class="p1"><span class="Apple-converted-space">            </span>selected_population(i, :) = population(randi(num_individuals), :);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1">end</p>
+<p class="p2"><br></p>
+<p class="p1">function new_population = crossover(population, crossover_rate)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Perform crossover to generate new individuals</p>
+<p class="p1"><span class="Apple-converted-space">    </span>num_individuals = size(population, 1);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>new_population = zeros(size(population));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for i = 1:2:num_individuals</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if rand &lt; crossover_rate</p>
+<p class="p1"><span class="Apple-converted-space">            </span>parent1 = population(i, :);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>parent2 = population(i+1, :);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>% Single-point crossover</p>
+<p class="p1"><span class="Apple-converted-space">            </span>crossover_point = randi([1, numel(parent1)-1]);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>new_population(i, :) = [parent1(1:crossover_point), parent2(crossover_point+1:end)];</p>
+<p class="p1"><span class="Apple-converted-space">            </span>new_population(i+1, :) = [parent2(1:crossover_point), parent1(crossover_point+1:end)];</p>
+<p class="p1"><span class="Apple-converted-space">        </span>else</p>
+<p class="p1"><span class="Apple-converted-space">            </span>new_population(i, :) = population(i, :);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>new_population(i+1, :) = population(i+1, :);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1">end</p>
+<p class="p2"><br></p>
+<p class="p1">function mutated_population = mutation(population, mutation_rate)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>% Perform mutation on the population</p>
+<p class="p1"><span class="Apple-converted-space">    </span>num_individuals = size(population, 1);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>num_variables = size(population, 2);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mutated_population = population;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for i = 1:num_individuals</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for j = 1:num_variables</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if rand &lt; mutation_rate</p>
+<p class="p1"><span class="Apple-converted-space">                </span>% Mutation by adding a random value</p>
+<p class="p1"><span class="Apple-converted-space">                </span>mutated_population(i, j) = population(i, j) + randn * 0.1;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>end</p>
+<p class="p1"><span class="Apple-converted-space">        </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1">end</p>
+</body>
+</html>
