@@ -1,1 +1,1 @@
-example
+This page contains the coding used to process the research data in the article entitled Sustainable Economic Production Quantity Optimization (SEPQ) Considering Food Waste Emission and Water Waste Emission Using Genetic Algorithm.
